@@ -1,44 +1,46 @@
-import AWS from "aws-sdk"
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { v4 as uuidv4 } from "uuid";
+
+// Initialize S3 client
+const s3Client = new S3Client({
+  region: "ap-south-2",
+  credentials: {
+    accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+  },
+});
+
 export async function uploadToS3(file: File) {
-    try{
-        AWS.config.update({
-            accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
-        })
-        const s3 = new AWS.S3({
-            params: {
-                Bucket: process.env.NEXT_PUBLIC_S3_BUCKET_NAME,
-            },
-            region: 'ap-south-2',
-        })
+  try {
+    const file_key = `uploads/${Date.now()}-${uuidv4()}-${file.name}`;
 
-        const file_key = 'uploads/' + Date.now().toString() + file.name.replace('', '-');
+    // Convert browser `File` to Buffer or Blob depending on context
+    const arrayBuffer = await file.arrayBuffer();
+    const fileBody = new Uint8Array(arrayBuffer);
 
-        const params = {
-            Bucket: process.env.NEXT_PUBLIC_S3_BUCKET_NAME!,
-            Key: file_key,
-            Body: file
-        }
-        
-        const upload = s3.putObject(params).on('httpUploadProgress', (event) => {
-            console.log('Uploading to S3...', parseInt(((event.loaded*100)/event.total).toString())) + '%'
-        }).promise()
+    const command = new PutObjectCommand({
+      Bucket: process.env.NEXT_PUBLIC_S3_BUCKET_NAME!,
+      Key: file_key,
+      Body: fileBody,
+      ContentType: file.type,
+    });
 
-        await upload.then((data) => {
-            console.log('Sccessfully uploaded to S3!', file_key);
-        })
+    await s3Client.send(command);
 
-        return Promise.resolve({
-            file_key,
-            file_name: file.name
-        })
-    }catch(error){
+    console.log("Successfully uploaded to S3!", file_key);
 
-    }
+    return {
+      file_key,
+      file_name: file.name,
+    };
+  } catch (error) {
+    console.error("Error uploading to S3:", error);
+    return null;
+  }
 }
 
-export function getS3Url(file_key: string){
-    const url = `https://${process.env.NEXT_PUBLIC_S3_BUCKET_NAME}.s3.ap-south-2.amazonaws/${file_key}`;
-
-    return url;
+// S3 public file URL
+export function getS3Url(file_key: string) {
+  const url = `https://${process.env.NEXT_PUBLIC_S3_BUCKET_NAME}.s3.ap-south-2.amazonaws.com/${file_key}`;
+  return url;
 }
