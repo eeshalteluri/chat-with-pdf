@@ -3,6 +3,7 @@ import ChatSidebar from '@/components/ChatSidebar';
 import PDFViewer from '@/components/PDFViewer';
 import { db } from '@/lib/db';
 import { chats } from '@/lib/db/schema';
+import { checkSubscription } from '@/lib/subscription';
 import { auth } from '@clerk/nextjs/server';
 import { chat } from '@pinecone-database/pinecone/dist/assistant/data/chat';
 import { eq } from 'drizzle-orm';
@@ -39,13 +40,18 @@ const ChatPage = async ({params: {chatId}} : Props) => {
 
     //Find current chat details
     const currentChat = _chats.find(chat => chat.id === parseInt(chatId));
+    const isPro = await checkSubscription()
 
   return (
     <div className='flex max-h-screen overflow-scroll scrollbar-hide'>
         <div className='flex w-full max-h-screen overflow-scroll scrollbar-hide'>
             {/*Chat Sidebar */}
             <div className='flex-[1] max-w-xs'>
-                <ChatSidebar chats={_chats} chatId={parseInt(chatId)} />
+                <ChatSidebar 
+                    chats={_chats} 
+                    chatId={parseInt(chatId)} 
+                    isPro={isPro} 
+                />
             </div>
             {/* PDF Viewer */}
             <div className='min-h-screen p-4 overflow-scroll flex-[5] scrollbar-hide'>
