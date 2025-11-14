@@ -8,6 +8,7 @@ import MessageList from './MessageList'
 import { DefaultChatTransport, TextUIPart, UIMessage } from 'ai'; // Ensure UIMessage is imported
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
+import { messageType } from '@/lib/db/schema'
 // Remove unnecessary import: import { messages } from '@/lib/db/schema' 
 
 type Props = {chatId: number}
@@ -80,10 +81,10 @@ const ChatComponent = ({chatId}: Props) => {
             const rawMessages = response.data?._messages; 
             const rawData = Array.isArray(rawMessages) ? rawMessages : [];
 
-            return rawData.map((msg: any) => {
+            return rawData.map((msg: messageType) => {
                 const textPart: TextUIPart = {
                     type: 'text',
-                    text: msg.content || msg.text || "",
+                    text: msg.content || "",
                 };
                 return {
                     id: msg.id?.toString() ?? crypto.randomUUID(),

@@ -5,18 +5,18 @@ import { db } from '@/lib/db';
 import { chats } from '@/lib/db/schema';
 import { checkSubscription } from '@/lib/subscription';
 import { auth } from '@clerk/nextjs/server';
-import { chat } from '@pinecone-database/pinecone/dist/assistant/data/chat';
 import { eq } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 import React from 'react'
 
 type Props = {
-    params: {
+    params: Promise<{
         chatId : string;
-    }
+    }>
 }
 
-const ChatPage = async ({params: {chatId}} : Props) => {
+const ChatPage = async ({params} : Props) => {
+    const {chatId} = await params;
     const {userId} = await auth();
 
     //IF no user is logged in

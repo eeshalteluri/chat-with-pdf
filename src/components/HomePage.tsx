@@ -2,7 +2,6 @@
 
 import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
-import { checkSubscription } from "@/lib/subscription";
 import { UserButton } from "@clerk/nextjs";
 import { LogIn } from "lucide-react";
 import Link from "next/link";
@@ -13,10 +12,6 @@ import { ChatType } from "@/lib/db/schema";
 export default function HomePage({ isAuth, isPro, firstChat }: { isAuth: boolean, isPro: boolean, firstChat: ChatType | null }) {
   const router = useRouter();
   console.log("Is Pro: ", isPro);
-  
-  const handleChats = () => {
-    router.push("/chats");
-  };
 
   return (
     <div className="w-screen min-h-screen bg-linear-to-r from-rose-100 to-teal-100">

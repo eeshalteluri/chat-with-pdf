@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     };
     const userMessages = messages.filter((message) => message.role === "user");
 
-    const allMessages = [systemPrompt, ...convertToModelMessages(messages)];
+    const allMessages = [systemPrompt, ...convertToModelMessages(userMessages)];
 
   const result = streamText({
     model: openai('gpt-4.1'),

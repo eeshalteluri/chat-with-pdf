@@ -3,7 +3,7 @@ import { db } from "./db";
 import { userSubscription } from "./db/schema";
 import { eq } from "drizzle-orm";
 
-const DAY_IN_MS = 100 * 60 * 60 *24;
+const DAY_IN_MS = 1000 * 60 * 60 *24;
 
 export const checkSubscription = async () => {
     const {userId} = await auth();
@@ -22,9 +22,12 @@ export const checkSubscription = async () => {
 
     const _userSubscription = _userSubscriptions[0];
 
-    const isValid = _userSubscription.stripePriceId && _userSubscription.stripeCurrentPeriodEnd?.getTime()! + DAY_IN_MS > Date.now();
+    if(_userSubscription?.stripeCurrentPeriodEnd){
+         const isValid = _userSubscription.stripePriceId && _userSubscription.stripeCurrentPeriodEnd.getTime() + DAY_IN_MS > Date.now();
 
     console.log("Is Valid: ", isValid);
 
     return !!isValid;
+    }
+    return false;
 }

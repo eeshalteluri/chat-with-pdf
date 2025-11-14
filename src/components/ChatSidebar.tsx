@@ -16,18 +16,7 @@ type Props = {
 
 const ChatSidebar = ({chats, chatId, isPro}: Props) => {
     const [loading, setLoading] = useState(false);
-
-    const handleSubscription = async () => {
-        try{
-            setLoading(true);
-            const response = await axios.post('/api/stripe');
-            window.location.href = response.data.url;
-        }catch(error){
-            console.error(error);
-        }finally{
-            setLoading(false);
-        }
-    }
+    console.log(loading);
 
   return (
     <div className='w-full h-screen p-4 textgray-200 bg-gray-900'>

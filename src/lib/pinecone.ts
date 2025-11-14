@@ -4,7 +4,6 @@ import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { Document, RecursiveCharacterTextSplitter } from "@pinecone-database/doc-splitter"
 import { getEmbeddings } from "./embeddings";
 import md5 from "md5"
-import { Vector } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch/db_data";
 import { converttoAscii } from "./utils";
 
 let pinecone: Pinecone | null = null;
@@ -82,7 +81,8 @@ export const truncateStringByBytes = (str: string, bytes: number) => {
 }
 
 async function prepareDocument(page: PDFPage) {
-    let {pageContent, metadata} = page;
+    let {pageContent} = page;
+    const {metadata} = page;
     pageContent = pageContent.replace(/\n/g, ''); 
 
     //split the docs

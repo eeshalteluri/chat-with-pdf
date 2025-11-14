@@ -1,13 +1,13 @@
 // /api/create-chat
 
 import { db } from "@/lib/db";
-import { chats, message } from "@/lib/db/schema";
+import { chats } from "@/lib/db/schema";
 import { loadS3IntoPinecone } from "@/lib/pinecone";
 import { getS3Url } from "@/lib/s3";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-export async function POST(req: Request, res: Response) {
+export async function POST(req: Request) {
     const {userId} = await auth();
 
     if(!userId){
@@ -38,6 +38,7 @@ export async function POST(req: Request, res: Response) {
             chat_id: chat_id[0].insertedId
         }, {status: 200})
     }catch(error){
+        console.log("Create chat error: ", error);
         return NextResponse.json(
             {error: "Internal Server Error"},
             {status: 500}

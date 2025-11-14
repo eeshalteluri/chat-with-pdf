@@ -21,6 +21,8 @@ export const messages = pgTable("messages", {
     role: userSystemEnum("role").notNull(),
 })
 
+export type messageType = typeof messages.$inferSelect
+
 export const userSubscription = pgTable("user_subscription", {
     id: serial("id").primaryKey(),
     userId: varchar("user_id", {length: 256}).notNull().unique(),
