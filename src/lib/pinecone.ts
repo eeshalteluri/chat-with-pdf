@@ -26,29 +26,42 @@ type PDFPage = {
 }
 
 export async function loadS3IntoPinecone(fileKey: string) {
-    //1. Obtain the PDF -> download and read from pdf
+    // 1. Obtain the PDF -> download and read from pdf
     console.log('downloading s3 into file system');
     const file_name = await downloadFromS3(fileKey);
 
     if(!file_name){
-        throw new Error('Couldnot download from s3');
+        throw new Error('Could not download from s3');
     }
 
     const loader = new PDFLoader(file_name);
+
     const pages = (await loader.load()) as PDFPage[];
+    
+    // CRITICAL CHECK 1: Ensure the PDF Loader returned pages
+    if (pages.length === 0) {
+        throw new Error("PDF Loader extracted 0 pages. The file may be empty or corrupted.");
+    }
 
-    //2. split and segment the pdf
-    const documents = await Promise.all(pages.map(prepareDocument));
-    console.log("Segmented PDF document data: ", documents)
+    // 2. split and segment the pdf
+    // We flatten the array here to get a single array of document segments
+    const documents = (await Promise.all(pages.map(prepareDocument))).flat(); 
+    
+    console.log(`Segmented PDF document data: ${documents.length} segments created.`);
 
-    //3. vectorize and embed individual documents
-    const vectors = await Promise.all(documents.flat().map(embedDocument));
+    // CRITICAL CHECK 2: Ensure segmentation produced usable text chunks
+    if (documents.length === 0) {
+        throw new Error("PDF segmentation resulted in 0 usable text chunks. Document content may be too short or failed to parse.");
+    }
 
-    //4. upload to pinecone
+    // 3. vectorize and embed individual documents
+    const vectors = await Promise.all(documents.map(embedDocument));
+
+    // 4. upload to pinecone
     const client = await getPinecone()
     const pineconeIndex = client.index('chat-with-pdf-et')
 
-    console.log('inserting vectors into pinecone')
+    console.log(`inserting ${vectors.length} vectors into pinecone`)
     const namespace = pineconeIndex.namespace(converttoAscii(fileKey));
 
     await namespace.upsert(vectors)
@@ -70,7 +83,7 @@ async function embedDocument(doc: Document) {
         }as PineconeRecord
 
     }catch(error){
-        console.log('error embedding document: ', error);
+        console.error('error embedding document: ', error);
         throw error;
     }
 }
@@ -83,10 +96,20 @@ export const truncateStringByBytes = (str: string, bytes: number) => {
 async function prepareDocument(page: PDFPage) {
     let {pageContent} = page;
     const {metadata} = page;
-    pageContent = pageContent.replace(/\n/g, ''); 
+    
+    // FIX: Removed this line. Removing all newlines breaks the RecursiveCharacterTextSplitter's 
+    // ability to find logical sentence/paragraph breaks.
+    // pageContent = pageContent.replace(/\n/g, ''); 
+
+    // Remove non-breaking space characters if they cause issues
+    pageContent = pageContent.replace(/\s+/g, ' ').trim();
 
     //split the docs
-    const splitter = new RecursiveCharacterTextSplitter();
+    const splitter = new RecursiveCharacterTextSplitter({
+        // Default settings are usually fine, but you can configure them here 
+        // if needed (e.g., chunkSize: 1000, chunkOverlap: 200)
+    });
+    
     const docs = await splitter.splitDocuments([
         new Document({
             pageContent,
